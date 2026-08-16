@@ -19,3 +19,5 @@ refund:
 stripe refunds create --payment-intent=pi_3U50fmQjxKZxjpsp10OQ6xZn
 ```
 stripeVersion: 2026-07-29.dahlia
+
+npm start - to run
