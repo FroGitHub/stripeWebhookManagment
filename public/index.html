@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<title>Stripe Dev Tool</title>
+<style>
+    body {
+        font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 0 16px;
+        color: #1a1a1a;
+    }
+    h2 { margin-top: 32px; }
+    .row { display: flex; gap: 8px; margin-bottom: 8px; }
+    input {
+        flex: 1;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    button {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 6px;
+        background: #635bff;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    button.secondary { background: #6b7280; }
+    button.danger { background: #dc2626; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-group { display: flex; gap: 8px; margin-top: 8px; }
+    #log {
+        width: 100%;
+        height: 260px;
+        margin-top: 24px;
+        background: #0f172a;
+        color: #4ade80;
+        font-family: "SF Mono", Consolas, monospace;
+        font-size: 12.5px;
+        padding: 12px;
+        border-radius: 8px;
+        box-sizing: border-box;
+        white-space: pre-wrap;
+        overflow-y: auto;
+    }
+    .status { font-size: 13px; color: #6b7280; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h2>1. Webhook Listener</h2>
+<p>Не забудьте перед цим залогінитися -- stripe login</p>
+<div class="row">
+    <input id="forwardTo" value="localhost:8080/api/v1/payments/webhook" />
+</div>
+<div class="btn-group">
+    <button id="startListen">Запустити лісенер</button>
+    <button id="stopListen" class="secondary">Зупинити</button>
+</div>
+<div class="status" id="listenStatus">Лісенер не запущено</div>
+
+<h2>2. Дії з платежем</h2>
+<div class="row">
+    <input id="paymentId" placeholder="pi_3U50fmQjxKZxjpsp10OQ6xZn" />
+</div>
+<div class="btn-group">
+    <button id="btnSuccess">Success</button>
+    <button id="btnFail" class="danger">Fail</button>
+    <button id="btnRefund" class="secondary">Refund</button>
+</div>
+
+<pre id="log"></pre>
+
+<script>
+const logEl = document.getElementById('log');
+const listenStatus = document.getElementById('listenStatus');
+
+function appendLog(text) {
+    logEl.textContent += text;
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+// Живий стрім логів з бекенду
+const es = new EventSource('/events');
+es.onmessage = (e) => appendLog(JSON.parse(e.data));
+
+async function post(url, body) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Помилка запиту');
+    return data;
+}
+
+document.getElementById('startListen').addEventListener('click', async () => {
+    try {
+        await post('/api/listen/start', { forwardTo: document.getElementById('forwardTo').value.trim() });
+        listenStatus.textContent = 'Лісенер запущено ✅';
+    } catch (err) {
+        appendLog('\n[Помилка] ' + err.message + '\n');
+    }
+});
+
+document.getElementById('stopListen').addEventListener('click', async () => {
+    try {
+        await post('/api/listen/stop');
+        listenStatus.textContent = 'Лісенер не запущено';
+    } catch (err) {
+        appendLog('\n[Помилка] ' + err.message + '\n');
+    }
+});
+
+function paymentId() {
+    return document.getElementById('paymentId').value.trim();
+}
+
+document.getElementById('btnSuccess').addEventListener('click', () =>
+    post('/api/payment/success', { id: paymentId() }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))
+);
+document.getElementById('btnFail').addEventListener('click', () =>
+    post('/api/payment/fail', { id: paymentId() }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))
+);
+document.getElementById('btnRefund').addEventListener('click', () =>
+    post('/api/payment/refund', { id: paymentId() }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))
+);
+</script>
+
+</body>
+</html>
