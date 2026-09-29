@@ -102,6 +102,12 @@ app.post('/api/payment/fail', (req, res) => {
     runStripe(['payment_intents', 'confirm', id, '--payment-method=pm_card_chargeDeclined'], res);
 });
 
+app.post('/api/payment/fail-insufficient-funds', (req, res) => {
+    const { id } = req.body;
+    if (!isSafeId(id)) return res.status(400).json({ error: 'Невалідний payment intent id' });
+    runStripe(['payment_intents', 'confirm', id, '--payment-method=pm_card_chargeDeclinedInsufficientFunds'], res);
+});
+
 app.post('/api/payment/refund', (req, res) => {
     const { id } = req.body;
     if (!isSafeId(id)) return res.status(400).json({ error: 'Невалідний payment intent id' });

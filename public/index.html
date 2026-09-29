@@ -71,6 +71,7 @@
 <div class="btn-group">
     <button id="btnSuccess">Success</button>
     <button id="btnFail" class="danger">Fail</button>
+    <button id="btnFailInsufficient" class="danger">Insufficient funds</button>
     <button id="btnRefund" class="secondary">Refund</button>
 </div>
 
@@ -127,6 +128,9 @@ document.getElementById('btnSuccess').addEventListener('click', () =>
 );
 document.getElementById('btnFail').addEventListener('click', () =>
     post('/api/payment/fail', { id: paymentId() }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))
+);
+document.getElementById('btnFailInsufficient').addEventListener('click', () =>
+    post('/api/payment/fail-insufficient-funds', { id: paymentId() }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))
 );
 document.getElementById('btnRefund').addEventListener('click', () =>
     post('/api/payment/refund', { id: paymentId() }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))

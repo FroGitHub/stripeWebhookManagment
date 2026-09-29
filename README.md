@@ -14,6 +14,10 @@ fail:
 ```
 stripe payment_intents confirm pi_3U50eJQjxKZxjpsp0e2t4pCP --payment-method=pm_card_chargeDeclined
 ```
+fail(insufficient funds): 
+```
+stripe payment_intents confirm pi_3U50eJQjxKZxjpsp0e2t4pCP --payment-method=pm_card_chargeDeclinedInsufficientFunds
+```
 refund: 
 ```
 stripe refunds create --payment-intent=pi_3U50fmQjxKZxjpsp10OQ6xZn
