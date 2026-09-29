@@ -117,3 +117,41 @@ app.post('/api/payment/refund', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Stripe dev tool running: http://localhost:${PORT}`);
 });
+
+function runStripeConcurrent(commands, res) {
+    broadcast(`\n[запускаю паралельно: ${commands.map((c) => c.join(' ')).join('  |  ')}]\n`);
+
+    Promise.all(
+        commands.map(
+            (args) =>
+                new Promise((resolve) => {
+                    broadcast(`\n$ stripe ${args.join(' ')}\n`);
+                    execFile('stripe', args, (error, stdout, stderr) => {
+                        const output = stdout + (stderr ? `\n${stderr}` : '');
+                        broadcast(output + '\n');
+                        resolve({ args, error, output });
+                    });
+                })
+        )
+    ).then((results) => {
+        const hasError = results.some((r) => r.error);
+        if (hasError) {
+            return res.status(500).json({ error: 'Одна з команд впала', results });
+        }
+        res.json({ results });
+    });
+}
+
+app.post('/api/payment/race', (req, res) => {
+    const { successId, failId } = req.body;
+    if (!isSafeId(successId) || !isSafeId(failId)) {
+        return res.status(400).json({ error: 'Невалідні payment intent id' });
+    }
+    runStripeConcurrent(
+        [
+            ['payment_intents', 'confirm', successId, '--payment-method=pm_card_visa'],
+            ['payment_intents', 'confirm', failId, '--payment-method=pm_card_chargeDeclined'],
+        ],
+        res
+    );
+});

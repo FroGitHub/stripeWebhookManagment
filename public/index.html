@@ -75,6 +75,21 @@
     <button id="btnRefund" class="secondary">Refund</button>
 </div>
 
+<details class="collapsible">
+    <summary>Race condition (success + fail одночасно)</summary>
+    <div class="collapsible-content">
+        <div class="row">
+            <input id="raceSuccessId" placeholder="pi_... (успішний)" />
+        </div>
+        <div class="row">
+            <input id="raceFailId" placeholder="pi_... (відхилений)" />
+        </div>
+        <div class="btn-group">
+            <button id="btnRace" class="danger">Race: Success + Fail</button>
+        </div>
+    </div>
+</details>
+
 <pre id="log"></pre>
 
 <script>
@@ -134,6 +149,13 @@ document.getElementById('btnFailInsufficient').addEventListener('click', () =>
 );
 document.getElementById('btnRefund').addEventListener('click', () =>
     post('/api/payment/refund', { id: paymentId() }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))
+);
+
+document.getElementById('btnRace').addEventListener('click', () =>
+    post('/api/payment/race', {
+        successId: document.getElementById('raceSuccessId').value.trim(),
+        failId: document.getElementById('raceFailId').value.trim(),
+    }).catch((e) => appendLog('\n[Помилка] ' + e.message + '\n'))
 );
 </script>
 
